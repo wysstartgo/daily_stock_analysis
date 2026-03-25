@@ -59,17 +59,17 @@ ENV LOG_DIR=/app/logs
 ENV DATABASE_PATH=/app/data/stock_analysis.db
 # Web/API service
 ENV WEBUI_HOST=0.0.0.0
-ENV API_PORT=8000
+ENV API_PORT=8188
 
 # 暴露 API 端口
-EXPOSE 8000
+EXPOSE 8188
 
 # 数据卷（持久化数据）
 VOLUME ["/app/data", "/app/logs", "/app/reports"]
 
 # 健康检查（FastAPI 模式）
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/api/health || curl -f http://localhost:8000/health \
+    CMD curl -f http://localhost:8188/api/health || curl -f http://localhost:8188/health \
     || python -c "import sys; sys.exit(0)"
 
 # 默认命令（可被覆盖）

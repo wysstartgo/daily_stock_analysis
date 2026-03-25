@@ -431,8 +431,8 @@ Enable the FastAPI service for configuration management and triggering analysis 
 | `python main.py --serve` | Start API service + run full analysis once |
 | `python main.py --serve-only` | Start API service only, manually trigger analysis |
 
-- URL: `http://127.0.0.1:8000`
-- API docs: `http://127.0.0.1:8000/docs`
+- URL: `http://127.0.0.1:8188`
+- API docs: `http://127.0.0.1:8188/docs`
 
 ### Features
 

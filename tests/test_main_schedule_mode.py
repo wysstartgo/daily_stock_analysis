@@ -44,7 +44,7 @@ class MainScheduleModeTestCase(unittest.TestCase):
             "serve": False,
             "serve_only": False,
             "host": "0.0.0.0",
-            "port": 8000,
+            "port": 8188,
             "backtest": False,
             "market_review": False,
             "schedule": False,

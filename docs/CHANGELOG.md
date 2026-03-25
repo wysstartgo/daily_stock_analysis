@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 变更
+
+- 🔌 **默认 Web / API 端口切换为 8188** — 后端 CLI、配置默认值、桌面端内置本地服务端口、Web 开发代理以及 Docker 默认暴露端口现已统一从 `8000` 切换到 `8188`；桌面端仍会在 `8188-8198` 范围内自动选择可用端口，以降低本机端口冲突概率。
+
 ## [1.0.3] - 2026-03-25
 
 ### 变更
