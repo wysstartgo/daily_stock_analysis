@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - 🖥️ **桌面安装包补齐初始化辅助模块** — Electron 打包清单现已显式包含 `apps/dsa-desktop/config-paths.js`，修复了 macOS 与 Windows 安装包启动时报 `Cannot find module './config-paths'`、导致桌面端无法打开的问题。
 - 💾 **桌面端改名后仍保留历史配置目录** — 桌面端启动时会显式把 `userData` 固定到历史 `daily-stock-analysis-desktop` 目录，避免应用显示名切换为“绣虎”后把 `.env`、数据库和日志写入新目录，造成用户误以为配置丢失。
+- 🩺 **桌面端健康检查兼容不同后端路由** — 桌面壳启动时现在会按顺序探测 `/api/health`、`/api/v1/health`、`/health`，避免后端实际可用但健康检查路径不一致时一直卡在“Preparing backend and loading UI...”启动页。
 
 ## [1.0.1] - 2026-03-25
 

@@ -3,8 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const net = require('net');
-const http = require('http');
 const { buildRuntimePaths, migrateLegacyPortableData } = require('./config-paths');
+const { buildHealthCheckUrls, probeHealthUrls } = require('./health-check');
 
 let mainWindow = null;
 let backendProcess = null;
@@ -153,7 +153,7 @@ function findAvailablePort(startPort = 8000, endPort = 8100) {
 }
 
 function waitForHealth(
-  url,
+  urls,
   timeoutMs = 60000,
   intervalMs = 250,
   requestTimeoutMs = 1500,
@@ -254,56 +254,46 @@ function waitForHealth(
         attempts,
       });
 
-      activeRequest = http.get(url, (res) => {
-        if (settled) {
-          return;
-        }
+      probeHealthUrls(urls, { requestTimeoutMs })
+        .then((probeResult) => {
+          if (settled) {
+            return;
+          }
 
-        res.resume();
-        if (res.statusCode === 200) {
-          const readyElapsedMs = Date.now() - start;
+          if (probeResult.ready) {
+            const readyElapsedMs = Date.now() - start;
+            emitProgress({
+              type: 'ready',
+              elapsedMs: readyElapsedMs,
+              attempts,
+              url: probeResult.url,
+            });
+            finish(null, { elapsedMs: readyElapsedMs, attempts, url: probeResult.url });
+            return;
+          }
+
           emitProgress({
-            type: 'ready',
-            elapsedMs: readyElapsedMs,
+            type: 'probe_status',
+            elapsedMs: Date.now() - start,
             attempts,
+            statuses: probeResult.statuses,
           });
-          finish(null, { elapsedMs: readyElapsedMs, attempts });
-          return;
-        }
+          scheduleNext();
+        })
+        .catch((error) => {
+          if (settled) {
+            return;
+          }
 
-        emitProgress({
-          type: 'probe_status',
-          elapsedMs: Date.now() - start,
-          attempts,
-          statusCode: res.statusCode,
+          emitProgress({
+            type: 'probe_error',
+            elapsedMs: Date.now() - start,
+            attempts,
+            errorCode: error.code || 'unknown',
+            errorMessage: error.message,
+          });
+          scheduleNext();
         });
-        scheduleNext();
-      });
-
-      activeRequest.setTimeout(requestTimeoutMs, () => {
-        emitProgress({
-          type: 'probe_timeout',
-          elapsedMs: Date.now() - start,
-          attempts,
-          requestTimeoutMs,
-        });
-        activeRequest.destroy(new Error(`Health probe request timeout after ${requestTimeoutMs}ms`));
-      });
-
-      activeRequest.on('error', (error) => {
-        if (settled) {
-          return;
-        }
-
-        emitProgress({
-          type: 'probe_error',
-          elapsedMs: Date.now() - start,
-          attempts,
-          errorCode: error.code || 'unknown',
-          errorMessage: error.message,
-        });
-        scheduleNext();
-      });
     };
 
     attempt();
@@ -324,6 +314,7 @@ function startBackend({ port, envFile, dbPath, logDir }) {
     PYTHONUTF8: '1',
     SCHEDULE_ENABLED: 'false',
     WEBUI_ENABLED: 'false',
+    WEBUI_AUTO_BUILD: 'false',
     BOT_ENABLED: 'false',
     DINGTALK_STREAM_ENABLED: 'false',
     FEISHU_STREAM_ENABLED: 'false',
@@ -506,7 +497,7 @@ async function createWindow() {
     return;
   }
 
-  const healthUrl = `http://127.0.0.1:${port}/api/health`;
+  const healthUrls = buildHealthCheckUrls(port);
   let lastHealthProgressLogAt = 0;
   const healthProgressLogIntervalMs = 2000;
 
@@ -516,7 +507,7 @@ async function createWindow() {
     }
 
     if (event.type === 'ready') {
-      logStartup(`Health ready in ${event.elapsedMs}ms (attempts=${event.attempts})`);
+      logStartup(`Health ready in ${event.elapsedMs}ms (attempts=${event.attempts}) url=${event.url || 'unknown'}`);
       return;
     }
 
@@ -534,7 +525,7 @@ async function createWindow() {
     lastHealthProgressLogAt = now;
     let detail = '';
     if (event.type === 'probe_status') {
-      detail = `status=${event.statusCode}`;
+      detail = `statuses=${(event.statuses || []).map((item) => `${item.url}:${item.statusCode ?? item.errorCode ?? 'unknown'}`).join(',')}`;
     } else if (event.type === 'probe_timeout') {
       detail = `probeTimeout=${event.requestTimeoutMs}ms`;
     } else if (event.type === 'probe_error') {
@@ -548,7 +539,7 @@ async function createWindow() {
 
   try {
     const healthInfo = await waitForHealth(
-      healthUrl,
+      healthUrls,
       60000,
       250,
       1500,
@@ -569,7 +560,7 @@ async function createWindow() {
       },
       onHealthProgress
     );
-    logStartup(`Backend ready in ${healthInfo.elapsedMs}ms (${healthInfo.attempts} probes)`);
+    logStartup(`Backend ready in ${healthInfo.elapsedMs}ms (${healthInfo.attempts} probes) via ${healthInfo.url || 'unknown'}`);
     const mainPageStartedAt = Date.now();
     await mainWindow.loadURL(`http://127.0.0.1:${port}/`);
     logStartup(`Main page loadURL resolved in ${Date.now() - mainPageStartedAt}ms`);
