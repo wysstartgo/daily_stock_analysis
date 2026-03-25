@@ -67,10 +67,10 @@ powershell -ExecutionPolicy Bypass -File scripts\build-all.ps1
   - 推送语义化 tag（如 `v3.2.12`）后自动触发
   - 在 Actions 页面手动触发并指定 `release_tag`
 - 产物：
-  - Windows 安装包：`daily-stock-analysis-windows-installer-<tag>.exe`
-  - Windows 免安装包：`daily-stock-analysis-windows-noinstall-<tag>.zip`
-  - macOS Intel：`daily-stock-analysis-macos-x64-<tag>.dmg`
-  - macOS Apple Silicon：`daily-stock-analysis-macos-arm64-<tag>.dmg`
+  - Windows 安装包：`xiuhu-windows-installer-<tag>.exe`
+  - Windows 免安装包：`xiuhu-windows-noinstall-<tag>.zip`
+  - macOS Intel：`xiuhu-macos-x64-<tag>.dmg`
+  - macOS Apple Silicon：`xiuhu-macos-arm64-<tag>.dmg`
 
 建议发布流程：
 
@@ -133,6 +133,8 @@ macOS:
     logs/desktop.log
 ```
 
+> 兼容性说明：桌面端显示名称已更新为“绣虎”，但为了确保已安装用户升级后仍能保留原有 `.env`、数据库和日志，运行时数据目录继续沿用 `daily-stock-analysis-desktop`。
+
 ## 配置文件说明
 
 - `.env` 仍然作为桌面端底层配置存储格式，但默认不再要求用户手动编辑文件
@@ -190,5 +192,5 @@ PyInstaller 打包时缺少模块，需要在 `scripts/build-backend.ps1` 中增
 将 `apps/dsa-desktop/dist/win-unpacked/` 整个文件夹打包发给用户即可。用户只需：
 
 1. 解压文件夹
-2. 双击 `Daily Stock Analysis.exe` 启动
+2. 双击 `绣虎.exe` 启动
 3. 首次启动若缺配置，按初始化向导补齐股票列表与主模型配置；如需更复杂的 provider/channel 设置，可进入高级配置页继续完成

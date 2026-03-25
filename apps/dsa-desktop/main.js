@@ -18,6 +18,10 @@ function resolveWindowBackgroundColor() {
 
 const isWindows = process.platform === 'win32';
 const appRootDev = path.resolve(__dirname, '..', '..');
+const DESKTOP_RUNTIME_DIRNAME = 'daily-stock-analysis-desktop';
+
+// 保持用户数据目录稳定，避免桌面端改名后丢失历史 .env / 数据库 / 日志。
+app.setPath('userData', path.join(app.getPath('appData'), DESKTOP_RUNTIME_DIRNAME));
 
 function resolveEnvExamplePath() {
   if (app.isPackaged) {

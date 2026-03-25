@@ -66,7 +66,7 @@ const DesktopSetupPage: React.FC = () => {
   const [saveError, setSaveError] = useState<ParsedApiError | null>(null);
 
   useEffect(() => {
-    document.title = '初始化桌面端配置 - DSA';
+    document.title = '初始化桌面端配置 - 绣虎';
   }, []);
 
   useEffect(() => {

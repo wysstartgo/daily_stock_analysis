@@ -131,7 +131,7 @@ function buildFxRefreshFeedback(data: PortfolioFxRefreshResponse): FxRefreshFeed
 const PortfolioPage: React.FC = () => {
   // Set page title
   useEffect(() => {
-    document.title = '持仓分析 - DSA';
+    document.title = '持仓分析 - 绣虎';
   }, []);
 
   const [accounts, setAccounts] = useState<PortfolioAccountItem[]>([]);

@@ -13,15 +13,15 @@ function makeTempDir(prefix) {
 test('buildRuntimePaths uses userData in packaged desktop runtime', () => {
   const paths = buildRuntimePaths({
     isPackaged: true,
-    userDataPath: '/Users/example/Library/Application Support/DSA',
-    exePath: '/Applications/Daily Stock Analysis.app/Contents/MacOS/Daily Stock Analysis',
+    userDataPath: '/Users/example/Library/Application Support/daily-stock-analysis-desktop',
+    exePath: '/Applications/绣虎.app/Contents/MacOS/绣虎',
   });
 
-  assert.equal(paths.appDir, '/Users/example/Library/Application Support/DSA');
-  assert.equal(paths.envPath, '/Users/example/Library/Application Support/DSA/.env');
+  assert.equal(paths.appDir, '/Users/example/Library/Application Support/daily-stock-analysis-desktop');
+  assert.equal(paths.envPath, '/Users/example/Library/Application Support/daily-stock-analysis-desktop/.env');
   assert.equal(
     paths.legacyPortableAppDir,
-    '/Applications/Daily Stock Analysis.app/Contents/MacOS'
+    '/Applications/绣虎.app/Contents/MacOS'
   );
 });
 
@@ -31,7 +31,7 @@ test('migrateLegacyPortableData copies legacy .env/data/logs into runtime dir on
   const paths = buildRuntimePaths({
     isPackaged: true,
     userDataPath: runtimeDir,
-    exePath: path.join(legacyDir, 'Daily Stock Analysis.exe'),
+    exePath: path.join(legacyDir, '绣虎.exe'),
   });
 
   fs.writeFileSync(path.join(legacyDir, '.env'), 'STOCK_LIST=600519\n', 'utf-8');

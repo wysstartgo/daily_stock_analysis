@@ -13,12 +13,13 @@
   },
   "build": {
     "appId": "com.daily-stock-analysis.desktop",
-    "productName": "Daily Stock Analysis",
+    "productName": "绣虎",
     "directories": {
       "output": "dist"
     },
     "files": [
       "main.js",
+      "config-paths.js",
       "preload.js",
       "renderer/**/*"
     ],
