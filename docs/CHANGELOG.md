@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-03-25
+
+### 新功能
+
+- 🧭 **桌面端初始化向导与持久化配置目录** — Windows 与 macOS 打包态现在都会把 `.env`、数据库和日志写入系统应用数据目录；首次启动若缺少 `STOCK_LIST` 或 AI 模型能力，会强制进入 `/setup` 初始化向导，补齐最小配置后才可进入主界面。向导支持 `OpenAI`、`Gemini` 以及 `Custom / OpenAI-Compatible` 单 Provider 配置，其中自定义兼容服务会映射到现有 `OPENAI_API_KEY / OPENAI_MODEL / OPENAI_BASE_URL` 字段，并提供保存前的“测试连接”能力；后续更新安装包、替换 `.app` / `.exe` 或重新安装时，已有桌面端配置会默认保留；从旧版安装目录旁 `.env` 升级时，桌面端会尝试自动迁移旧 `.env`、`data/`、`logs/`。
+
 ## [3.10.1] - 2026-03-24
 
 ### 新功能

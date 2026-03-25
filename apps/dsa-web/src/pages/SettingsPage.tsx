@@ -15,6 +15,7 @@ import {
   SettingsLoading,
   SettingsSectionCard,
 } from '../components/settings';
+import { evaluateDesktopSetup } from '../utils/desktopSetup';
 import { getCategoryDescriptionZh } from '../utils/systemConfigI18n';
 import type { SystemConfigCategory } from '../types/systemConfig';
 
@@ -41,6 +42,8 @@ const SettingsPage: React.FC = () => {
   const [showImportConfirm, setShowImportConfirm] = useState(false);
   const desktopImportRef = useRef<HTMLInputElement | null>(null);
   const isDesktopRuntime = typeof window !== 'undefined' && Boolean((window as DesktopWindow).dsaDesktop);
+  const isSetupRequired = typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('setup') === 'required';
 
   // Set page title
   useEffect(() => {
@@ -91,6 +94,8 @@ const SettingsPage: React.FC = () => {
   }, [clearToast, toast]);
 
   const rawActiveItems = itemsByCategory[activeCategory] || [];
+  const allItems = Object.values(itemsByCategory).flat();
+  const desktopSetupStatus = evaluateDesktopSetup(allItems);
   const rawActiveItemMap = new Map(rawActiveItems.map((item) => [item.key, String(item.value ?? '')]));
   const hasConfiguredChannels = Boolean((rawActiveItemMap.get('LLM_CHANNELS') || '').trim());
   const hasLitellmConfig = Boolean((rawActiveItemMap.get('LITELLM_CONFIG') || '').trim());
@@ -263,6 +268,25 @@ const SettingsPage: React.FC = () => {
             actionLabel={retryAction === 'save' ? '重试保存' : undefined}
             onAction={retryAction === 'save' ? () => void retry() : undefined}
           />
+        ) : null}
+
+        {isDesktopRuntime && isSetupRequired ? (
+          <div className="mt-3">
+            <SettingsAlert
+              title="请先完成桌面端初始化配置"
+              message="建议先补齐自选股列表，并至少配置一种 AI 模型能力。保存成功后，这些设置会持久保留在系统应用数据目录中。"
+            />
+          </div>
+        ) : null}
+
+        {isDesktopRuntime && !isSetupRequired && desktopSetupStatus.isComplete ? (
+          <div className="mt-3">
+            <SettingsAlert
+              title="初始化已完成"
+              message="当前桌面端已完成首次初始化，可直接进入主界面。"
+              variant="success"
+            />
+          </div>
         ) : null}
       </div>
 

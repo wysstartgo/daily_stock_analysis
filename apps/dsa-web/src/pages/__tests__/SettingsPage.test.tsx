@@ -437,6 +437,15 @@ describe('SettingsPage', () => {
     expect(screen.queryByRole('button', { name: '导出 .env' })).not.toBeInTheDocument();
   });
 
+  it('shows completed desktop setup status in settings when initialization is finished', async () => {
+    (window as { dsaDesktop?: unknown }).dsaDesktop = { version: '0.1.0' };
+
+    render(<SettingsPage />);
+
+    expect(await screen.findByText(/初始化已完成/)).toBeInTheDocument();
+    expect(screen.getByText(/当前桌面端已完成首次初始化，可直接进入主界面。/)).toBeInTheDocument();
+  });
+
   it('renders desktop env backup actions in desktop runtime and exports saved env', async () => {
     (window as { dsaDesktop?: unknown }).dsaDesktop = { version: '0.1.0' };
 

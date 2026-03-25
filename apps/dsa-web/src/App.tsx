@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import BacktestPage from './pages/BacktestPage';
+import DesktopSetupPage from './pages/DesktopSetupPage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -10,12 +11,22 @@ import ChatPage from './pages/ChatPage';
 import PortfolioPage from './pages/PortfolioPage';
 import { ApiErrorAlert, Shell } from './components/common';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useDesktopSetupGuard } from './hooks';
 import { useAgentChatStore } from './stores/agentChatStore';
 import './App.css';
 
 const AppContent: React.FC = () => {
   const location = useLocation();
   const { authEnabled, loggedIn, isLoading, loadError, refreshStatus } = useAuth();
+  const isDesktopRuntime = typeof window !== 'undefined' && Boolean((window as Window & {
+    dsaDesktop?: {
+      version?: string;
+    };
+  }).dsaDesktop);
+  const desktopSetup = useDesktopSetupGuard({
+    enabled: isDesktopRuntime && (!authEnabled || loggedIn),
+    pathname: location.pathname,
+  });
 
   useEffect(() => {
     useAgentChatStore.getState().setCurrentRoute(location.pathname);
@@ -58,8 +69,25 @@ const AppContent: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
+  if (desktopSetup.isChecking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-base">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan/20 border-t-cyan" />
+      </div>
+    );
+  }
+
+  if (desktopSetup.shouldRedirectHome) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (desktopSetup.shouldBlockNavigation) {
+    return <Navigate to="/setup" replace />;
+  }
+
   return (
     <Routes>
+      <Route path="/setup" element={<DesktopSetupPage />} />
       <Route element={<Shell />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/chat" element={<ChatPage />} />

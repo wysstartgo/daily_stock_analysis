@@ -4,11 +4,13 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const net = require('net');
 const http = require('http');
+const { buildRuntimePaths, migrateLegacyPortableData } = require('./config-paths');
 
 let mainWindow = null;
 let backendProcess = null;
 let logFilePath = null;
 let backendStartError = null;
+let runtimePaths = null;
 
 function resolveWindowBackgroundColor() {
   return nativeTheme.shouldUseDarkColors ? '#08080c' : '#f4f7fb';
@@ -22,14 +24,6 @@ function resolveEnvExamplePath() {
     return path.join(process.resourcesPath, '.env.example');
   }
   return path.join(appRootDev, '.env.example');
-}
-
-function resolveAppDir() {
-  if (app.isPackaged) {
-    // exe 所在目录
-    return path.dirname(app.getPath('exe'));
-  }
-  return app.getPath('userData');
 }
 
 function resolveBackendPath() {
@@ -51,9 +45,9 @@ function resolveBackendPath() {
 }
 
 function initLogging() {
-  const appDir = app.isPackaged ? path.dirname(app.getPath('exe')) : app.getPath('userData');
-  logFilePath = path.join(appDir, 'logs', 'desktop.log');
-  
+  const paths = getRuntimePaths();
+  logFilePath = paths.logFilePath;
+
   // 确保日志目录存在
   const logDir = path.dirname(logFilePath);
   if (!fs.existsSync(logDir)) {
@@ -61,6 +55,35 @@ function initLogging() {
   }
   
   logLine('Desktop app starting');
+}
+
+function getRuntimePaths() {
+  if (runtimePaths) {
+    return runtimePaths;
+  }
+
+  runtimePaths = buildRuntimePaths({
+    isPackaged: app.isPackaged,
+    userDataPath: app.getPath('userData'),
+    exePath: app.getPath('exe'),
+  });
+  return runtimePaths;
+}
+
+function prepareRuntimeStorage() {
+  const paths = getRuntimePaths();
+  fs.mkdirSync(paths.appDir, { recursive: true });
+  const migration = migrateLegacyPortableData({
+    fs,
+    paths,
+    log: (message) => logLine(message),
+  });
+
+  if (migration.migrated) {
+    logLine(`Desktop runtime migrated to persistent app data dir: ${paths.appDir}`);
+  }
+
+  return paths;
 }
 
 function logLine(message) {
@@ -390,6 +413,7 @@ function stopBackend() {
 }
 
 async function createWindow() {
+  const paths = prepareRuntimeStorage();
   initLogging();
   const startupStartedAt = Date.now();
   const logStartup = (message) => {
@@ -452,21 +476,21 @@ async function createWindow() {
     return { action: 'deny' };
   });
 
-  const appDir = resolveAppDir();
-  const envPath = path.join(appDir, '.env');
-  ensureEnvFile(envPath);
-  logStartup(`Env file ready: ${envPath}`);
+  ensureEnvFile(paths.envPath);
+  logStartup(`Env file ready: ${paths.envPath}`);
 
   const portFindStartedAt = Date.now();
   const port = await findAvailablePort(8000, 8100);
   logStartup(`Using port ${port} (selected in ${Date.now() - portFindStartedAt}ms)`);
-  logStartup(`App directory=${appDir}`);
-
-  const dbPath = path.join(appDir, 'data', 'stock_analysis.db');
-  const logDir = path.join(appDir, 'logs');
+  logStartup(`App directory=${paths.appDir}`);
 
   try {
-    const launchInfo = startBackend({ port, envFile: envPath, dbPath, logDir });
+    const launchInfo = startBackend({
+      port,
+      envFile: paths.envPath,
+      dbPath: paths.dbPath,
+      logDir: paths.logDir,
+    });
     logStartup(`Backend launch mode=${launchInfo.mode}`);
     logStartup(`Backend launch command=${launchInfo.command}`);
     logStartup(`Backend launch cwd=${launchInfo.cwd}`);
