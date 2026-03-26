@@ -565,7 +565,8 @@ def main() -> int:
     if start_serve:
         if args.host == '0.0.0.0' and os.getenv('WEBUI_HOST'):
             args.host = os.getenv('WEBUI_HOST')
-        if args.port == 8188 and os.getenv('WEBUI_PORT'):
+        desktop_mode = os.getenv("DSA_DESKTOP_MODE", "").strip().lower() == "true"
+        if not desktop_mode and args.port == 8188 and os.getenv('WEBUI_PORT'):
             args.port = int(os.getenv('WEBUI_PORT'))
 
     bot_clients_started = False

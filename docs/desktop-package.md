@@ -138,6 +138,7 @@ macOS:
 ## 配置文件说明
 
 - `.env` 仍然作为桌面端底层配置存储格式，但默认不再要求用户手动编辑文件
+- 桌面打包态会忽略 `.env` 中的 `WEBUI_PORT`，始终以 Electron 当前选中的本地端口启动后端，避免旧配置把桌面端拖回已被其他本地系统占用的端口
 - 首次启动时会自动生成 `.env`，并检查以下关键配置：
   - `STOCK_LIST`：自选股列表（逗号分隔）
   - 至少一种 AI 模型能力：例如 `LLM_CHANNELS`、`LITELLM_CONFIG`、`OPENAI_API_KEY`、`GEMINI_API_KEY`

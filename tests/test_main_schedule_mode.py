@@ -112,6 +112,40 @@ class MainScheduleModeTestCase(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         run_full_analysis.assert_called_once_with(config, args, ["600519", "000001"])
 
+    def test_desktop_mode_ignores_legacy_webui_port_env_override(self) -> None:
+        args = self._make_args(serve_only=True, host="127.0.0.1", port=8188)
+        config = self._make_config(run_immediately=True)
+
+        with patch.dict(os.environ, {"WEBUI_PORT": "8000", "DSA_DESKTOP_MODE": "true"}, clear=False), \
+             patch("main.parse_arguments", return_value=args), \
+             patch("main.get_config", return_value=config), \
+             patch("main.setup_logging"), \
+             patch("main.prepare_webui_frontend_assets", return_value=True), \
+             patch("main.start_api_server") as start_api_server, \
+             patch("main.start_bot_stream_clients"), \
+             patch("main.time.sleep", side_effect=KeyboardInterrupt):
+            exit_code = main.main()
+
+        self.assertEqual(exit_code, 0)
+        start_api_server.assert_called_once_with(host="127.0.0.1", port=8188, config=config)
+
+    def test_non_desktop_mode_keeps_legacy_webui_port_env_override(self) -> None:
+        args = self._make_args(serve_only=True, host="127.0.0.1", port=8188)
+        config = self._make_config(run_immediately=True)
+
+        with patch.dict(os.environ, {"WEBUI_PORT": "8000"}, clear=False), \
+             patch("main.parse_arguments", return_value=args), \
+             patch("main.get_config", return_value=config), \
+             patch("main.setup_logging"), \
+             patch("main.prepare_webui_frontend_assets", return_value=True), \
+             patch("main.start_api_server") as start_api_server, \
+             patch("main.start_bot_stream_clients"), \
+             patch("main.time.sleep", side_effect=KeyboardInterrupt):
+            exit_code = main.main()
+
+        self.assertEqual(exit_code, 0)
+        start_api_server.assert_called_once_with(host="127.0.0.1", port=8000, config=config)
+
 
 if __name__ == "__main__":
     unittest.main()
