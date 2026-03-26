@@ -116,7 +116,11 @@ class MainScheduleModeTestCase(unittest.TestCase):
         args = self._make_args(serve_only=True, host="127.0.0.1", port=8188)
         config = self._make_config(run_immediately=True)
 
-        with patch.dict(os.environ, {"WEBUI_PORT": "8000", "DSA_DESKTOP_MODE": "true"}, clear=False), \
+        with patch.dict(
+            os.environ,
+            {"WEBUI_PORT": "8000", "DSA_DESKTOP_MODE": "true", "GITHUB_ACTIONS": "false"},
+            clear=False,
+        ), \
              patch("main.parse_arguments", return_value=args), \
              patch("main.get_config", return_value=config), \
              patch("main.setup_logging"), \
@@ -133,7 +137,11 @@ class MainScheduleModeTestCase(unittest.TestCase):
         args = self._make_args(serve_only=True, host="127.0.0.1", port=8188)
         config = self._make_config(run_immediately=True)
 
-        with patch.dict(os.environ, {"WEBUI_PORT": "8000"}, clear=False), \
+        with patch.dict(
+            os.environ,
+            {"WEBUI_PORT": "8000", "GITHUB_ACTIONS": "false"},
+            clear=False,
+        ), \
              patch("main.parse_arguments", return_value=args), \
              patch("main.get_config", return_value=config), \
              patch("main.setup_logging"), \
