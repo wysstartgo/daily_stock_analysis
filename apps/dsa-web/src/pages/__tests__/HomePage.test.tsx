@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { analysisApi, DuplicateTaskError } from '../../api/analysis';
 import { historyApi } from '../../api/history';
+import { systemConfigApi } from '../../api/systemConfig';
 import { useStockPoolStore } from '../../stores';
 import { getReportText, normalizeReportLanguage } from '../../utils/reportLanguage';
 import HomePage from '../HomePage';
@@ -36,6 +37,12 @@ vi.mock('../../api/analysis', async () => {
     },
   };
 });
+
+vi.mock('../../api/systemConfig', () => ({
+  systemConfigApi: {
+    getConfig: vi.fn(),
+  },
+}));
 
 vi.mock('../../hooks/useTaskStream', () => ({
   useTaskStream: vi.fn(),
@@ -74,6 +81,13 @@ describe('HomePage', () => {
     vi.clearAllMocks();
     navigateMock.mockReset();
     useStockPoolStore.getState().resetDashboardState();
+    sessionStorage.clear();
+    delete (window as { dsaDesktop?: unknown }).dsaDesktop;
+    vi.mocked(systemConfigApi.getConfig).mockResolvedValue({
+      configVersion: 'v1',
+      maskToken: '******',
+      items: [],
+    });
   });
 
   it('renders the dashboard workspace and auto-loads the first report', async () => {
@@ -128,6 +142,142 @@ describe('HomePage', () => {
     expect(screen.getByRole('heading', { name: '开始分析', level: 3 })).toBeInTheDocument();
     expect(screen.getByText('输入股票代码进行分析，或从左侧选择历史报告查看')).toBeInTheDocument();
     expect(screen.getByText('暂无历史分析记录')).toBeInTheDocument();
+  });
+
+  it('auto-analyzes the configured desktop stock list once on startup', async () => {
+    (window as { dsaDesktop?: unknown }).dsaDesktop = { version: '1.0.0' };
+    vi.mocked(historyApi.getList).mockResolvedValue({
+      total: 0,
+      page: 1,
+      limit: 20,
+      items: [],
+    });
+    vi.mocked(systemConfigApi.getConfig).mockResolvedValue({
+      configVersion: 'v1',
+      maskToken: '******',
+      items: [
+        { key: 'STOCK_LIST', value: '600519,AAPL', rawValueExists: true, isMasked: false },
+        { key: 'OPENAI_API_KEY', value: 'secret-key', rawValueExists: true, isMasked: false },
+      ],
+    });
+    vi.mocked(analysisApi.analyzeAsync).mockResolvedValue({
+      taskId: 'task-1',
+      status: 'pending',
+    });
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByTestId('home-dashboard');
+
+    await waitFor(() => {
+      expect(systemConfigApi.getConfig).toHaveBeenCalledWith(false);
+      expect(analysisApi.analyzeAsync).toHaveBeenCalledTimes(2);
+    });
+
+    expect(analysisApi.analyzeAsync).toHaveBeenNthCalledWith(1, {
+      stockCode: '600519',
+      reportType: 'detailed',
+      stockName: undefined,
+      originalQuery: '600519',
+      selectionSource: 'import',
+      notify: true,
+    });
+    expect(analysisApi.analyzeAsync).toHaveBeenNthCalledWith(2, {
+      stockCode: 'AAPL',
+      reportType: 'detailed',
+      stockName: undefined,
+      originalQuery: 'AAPL',
+      selectionSource: 'import',
+      notify: true,
+    });
+  });
+
+  it('does not auto-analyze the desktop stock list twice within the same app session', async () => {
+    (window as { dsaDesktop?: unknown }).dsaDesktop = { version: '1.0.0' };
+    vi.mocked(historyApi.getList).mockResolvedValue({
+      total: 0,
+      page: 1,
+      limit: 20,
+      items: [],
+    });
+    vi.mocked(systemConfigApi.getConfig).mockResolvedValue({
+      configVersion: 'v1',
+      maskToken: '******',
+      items: [
+        { key: 'STOCK_LIST', value: '600519', rawValueExists: true, isMasked: false },
+        { key: 'OPENAI_API_KEY', value: 'secret-key', rawValueExists: true, isMasked: false },
+      ],
+    });
+    vi.mocked(analysisApi.analyzeAsync).mockResolvedValue({
+      taskId: 'task-1',
+      status: 'pending',
+    });
+
+    const { unmount } = render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByTestId('home-dashboard');
+    await waitFor(() => {
+      expect(analysisApi.analyzeAsync).toHaveBeenCalledTimes(1);
+    });
+
+    unmount();
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByTestId('home-dashboard');
+
+    await waitFor(() => {
+      expect(analysisApi.analyzeAsync).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('skips desktop stock list auto-analysis when the setting is disabled', async () => {
+    (window as { dsaDesktop?: unknown }).dsaDesktop = { version: '1.0.0' };
+    vi.mocked(historyApi.getList).mockResolvedValue({
+      total: 0,
+      page: 1,
+      limit: 20,
+      items: [],
+    });
+    vi.mocked(systemConfigApi.getConfig).mockResolvedValue({
+      configVersion: 'v1',
+      maskToken: '******',
+      items: [
+        { key: 'STOCK_LIST', value: '600519', rawValueExists: true, isMasked: false },
+        { key: 'OPENAI_API_KEY', value: 'secret-key', rawValueExists: true, isMasked: false },
+        { key: 'DESKTOP_AUTO_ANALYZE_STOCK_LIST_ON_STARTUP', value: 'false', rawValueExists: true, isMasked: false },
+      ],
+    });
+    vi.mocked(analysisApi.analyzeAsync).mockResolvedValue({
+      taskId: 'task-1',
+      status: 'pending',
+    });
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    );
+
+    await screen.findByTestId('home-dashboard');
+
+    await waitFor(() => {
+      expect(systemConfigApi.getConfig).toHaveBeenCalledWith(false);
+    });
+
+    expect(analysisApi.analyzeAsync).not.toHaveBeenCalled();
   });
 
   it('surfaces duplicate task warnings from dashboard submission', async () => {

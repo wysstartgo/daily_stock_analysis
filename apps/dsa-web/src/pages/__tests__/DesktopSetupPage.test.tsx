@@ -158,4 +158,42 @@ describe('DesktopSetupPage', () => {
 
     expect(await screen.findByText('连接成功 · qwen-max · 320 ms')).toBeInTheDocument();
   });
+
+  it('keeps an OpenAI base url when saving the OpenAI provider', async () => {
+    render(
+      <MemoryRouter>
+        <DesktopSetupPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('heading', { name: '初始化桌面端配置' })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('自选股列表'), {
+      target: { value: '600519' },
+    });
+    fireEvent.change(screen.getByLabelText('模型名称'), {
+      target: { value: 'gpt-4o-mini' },
+    });
+    fireEvent.change(screen.getByLabelText('API Key'), {
+      target: { value: 'secret-key' },
+    });
+    fireEvent.change(screen.getByLabelText('Base URL'), {
+      target: { value: 'https://api.openai-proxy.example.com/v1' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '保存并进入主界面' }));
+
+    await waitFor(() => {
+      expect(validateMock).toHaveBeenCalledWith({
+        items: [
+          { key: 'STOCK_LIST', value: '600519' },
+          { key: 'OPENAI_API_KEY', value: 'secret-key' },
+          { key: 'OPENAI_MODEL', value: 'gpt-4o-mini' },
+          { key: 'OPENAI_BASE_URL', value: 'https://api.openai-proxy.example.com/v1' },
+          { key: 'GEMINI_API_KEY', value: '' },
+          { key: 'GEMINI_MODEL', value: '' },
+        ],
+      });
+    });
+  });
 });

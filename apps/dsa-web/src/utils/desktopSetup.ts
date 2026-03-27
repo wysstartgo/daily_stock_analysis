@@ -100,7 +100,7 @@ export function buildDesktopSetupInitialValues(items: SystemConfigItem[]): Deskt
     provider,
     model: getItemValue(itemMap, 'OPENAI_MODEL'),
     apiKey: getItemValue(itemMap, 'OPENAI_API_KEY'),
-    baseUrl: provider === 'custom' ? getItemValue(itemMap, 'OPENAI_BASE_URL') : '',
+    baseUrl: getItemValue(itemMap, 'OPENAI_BASE_URL'),
   };
 }
 
@@ -125,7 +125,7 @@ export function buildDesktopSetupUpdateItems(values: DesktopSetupFormValues): De
     { key: 'STOCK_LIST', value: normalizedStockList },
     { key: 'OPENAI_API_KEY', value: apiKey },
     { key: 'OPENAI_MODEL', value: model },
-    { key: 'OPENAI_BASE_URL', value: values.provider === 'custom' ? baseUrl : '' },
+    { key: 'OPENAI_BASE_URL', value: baseUrl },
     { key: 'GEMINI_API_KEY', value: '' },
     { key: 'GEMINI_MODEL', value: '' },
   ];

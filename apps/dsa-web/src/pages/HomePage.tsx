@@ -7,13 +7,18 @@ import { StockAutocomplete } from '../components/StockAutocomplete';
 import { HistoryList } from '../components/history';
 import { ReportMarkdown, ReportSummary } from '../components/report';
 import { TaskPanel } from '../components/tasks';
-import { useDashboardLifecycle, useHomeDashboardState } from '../hooks';
+import { useDashboardLifecycle, useDesktopAutoAnalyzeStockList, useHomeDashboardState } from '../hooks';
 import { getReportText, normalizeReportLanguage } from '../utils/reportLanguage';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const isDesktopRuntime = typeof window !== 'undefined' && Boolean((window as Window & {
+    dsaDesktop?: {
+      version?: string;
+    };
+  }).dsaDesktop);
 
   const {
     query,
@@ -65,6 +70,12 @@ const HomePage: React.FC = () => {
     syncTaskUpdated,
     syncTaskFailed,
     removeTask,
+  });
+
+  useDesktopAutoAnalyzeStockList({
+    enabled: isDesktopRuntime,
+    notify,
+    submitAnalysis,
   });
 
   const handleHistoryItemClick = useCallback((recordId: number) => {

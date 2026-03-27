@@ -104,7 +104,7 @@ const DesktopSetupPage: React.FC = () => {
     if (values.provider === 'custom') {
       return '填写兼容 OpenAI API 的服务地址，例如 https://custom.example.com/v1';
     }
-    return '可选。留空时沿用服务默认地址。';
+    return '可选。可填写官方或代理 / 网关地址；留空时沿用服务默认地址。';
   }, [values.provider]);
 
   const updateField = <K extends keyof DesktopSetupFormValues>(key: K, value: DesktopSetupFormValues[K]) => {
@@ -125,7 +125,7 @@ const DesktopSetupPage: React.FC = () => {
     setValues((previous) => ({
       ...previous,
       provider: nextProvider,
-      baseUrl: nextProvider === 'custom' ? previous.baseUrl : '',
+      baseUrl: nextProvider === 'gemini' ? '' : previous.baseUrl,
     }));
     setFieldErrors((previous) => ({
       ...previous,

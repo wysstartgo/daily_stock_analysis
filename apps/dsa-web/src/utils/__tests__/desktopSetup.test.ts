@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildDesktopSetupInitialValues,
   buildDesktopSetupUpdateItems,
   evaluateDesktopSetup,
   inferDesktopSetupProvider,
@@ -84,5 +85,41 @@ describe('evaluateDesktopSetup', () => {
       { key: 'GEMINI_API_KEY', value: '' },
       { key: 'GEMINI_MODEL', value: '' },
     ]);
+  });
+
+  it('preserves openai base url when the wizard saves an OpenAI provider', () => {
+    const updates = buildDesktopSetupUpdateItems({
+      stockList: '600519\nAAPL',
+      provider: 'openai',
+      model: 'gpt-4o-mini',
+      apiKey: 'secret-key',
+      baseUrl: 'https://api.openai-proxy.example.com/v1',
+    });
+
+    expect(updates).toEqual([
+      { key: 'STOCK_LIST', value: '600519,AAPL' },
+      { key: 'OPENAI_API_KEY', value: 'secret-key' },
+      { key: 'OPENAI_MODEL', value: 'gpt-4o-mini' },
+      { key: 'OPENAI_BASE_URL', value: 'https://api.openai-proxy.example.com/v1' },
+      { key: 'GEMINI_API_KEY', value: '' },
+      { key: 'GEMINI_MODEL', value: '' },
+    ]);
+  });
+
+  it('prefills saved openai base url back into setup initial values', () => {
+    const initialValues = buildDesktopSetupInitialValues([
+      item('STOCK_LIST', '600519,AAPL'),
+      item('OPENAI_API_KEY', 'secret-key'),
+      item('OPENAI_MODEL', 'gpt-4o-mini'),
+      item('OPENAI_BASE_URL', 'https://api.openai-proxy.example.com/v1'),
+    ]);
+
+    expect(initialValues).toEqual({
+      stockList: '600519,AAPL',
+      provider: 'custom',
+      model: 'gpt-4o-mini',
+      apiKey: 'secret-key',
+      baseUrl: 'https://api.openai-proxy.example.com/v1',
+    });
   });
 });

@@ -1,5 +1,6 @@
 export { useAuth } from './useAuth';
 export { useDashboardLifecycle } from './useDashboardLifecycle';
+export { useDesktopAutoAnalyzeStockList } from './useDesktopAutoAnalyzeStockList';
 export { useDesktopSetupGuard } from './useDesktopSetupGuard';
 export { useHomeDashboardState } from './useHomeDashboardState';
 export { useTaskStream } from './useTaskStream';

@@ -17,7 +17,7 @@ type FetchHistoryOptions = {
   silent?: boolean;
 };
 
-type SubmitAnalysisOptions = {
+export type SubmitAnalysisOptions = {
   stockCode?: string;
   stockName?: string;
   originalQuery?: string;

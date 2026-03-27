@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - 🎯 **多 Agent 次优买点不再盲目复制理想买点**（fixes #851）— 当多智能体结果缺少独立 `secondary_buy` 时，仪表盘现在优先展示 `N/A` 而不是把 fallback 值硬拷贝成与 `ideal_buy` 完全相同，减少误导性的双买点展示。
 - 🧩 **Tushare 初始化不再强依赖本地 SDK 包** — `TushareFetcher` 现在直接使用内置 HTTP client 访问 Tushare Pro，不再在启动阶段先 `import tushare` 才能初始化；修复了 Docker、桌面打包或环境重建后因缺少 `tushare` 包而提前报 `No module named 'tushare'` 的问题，并补充对应回归测试。
 - 🖥️ **桌面端不再被 `.env` 里的旧 `WEBUI_PORT` 覆盖** — 桌面打包态启动后端时现在会忽略持久化 `.env` 中的 `WEBUI_PORT`，始终使用 Electron 当次选中的本地端口，避免因历史 `8000` 配置残留而误连到其他本地系统页面。
+- 🧭 **初始化向导的 OpenAI Base URL 现已与设置页保持一致** — 桌面端初始化向导在 `OpenAI` 模式下填写的 `Base URL` 现在会持久保存到运行时 `.env`，并在后续重新打开向导或进入系统设置时正确回填；provider 在 `OpenAI` / `Custom` 间切换时也不再误清空该地址。
 
 ## [1.0.3] - 2026-03-25
 
